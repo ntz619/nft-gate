@@ -176,12 +176,17 @@
 
 <script>
   const COLLECTION_MINT  = '7RHNii678utwGh56Q4NA6xt2cfq8RukHk42KTv8ky4gf';
-  const RPC_URL          = 'https://api.mainnet-beta.solana.com';
   const METADATA_PROG_ID = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
   const TOKEN_PROG_ID    = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 
+  // Free public RPCs tried in order until one succeeds
+  const RPC_ENDPOINTS = [
+    'https://rpc.ankr.com/solana',
+    'https://solana-mainnet.rpc.extrnode.com',
+    'https://mainnet.rpcpool.com',
+  ];
+
   const { Connection, PublicKey } = solanaWeb3;
-  const connection = new Connection(RPC_URL, 'confirmed');
 
   function show(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -216,7 +221,21 @@
     }
   }
 
+  async function getConnection() {
+    for (const url of RPC_ENDPOINTS) {
+      try {
+        const conn = new Connection(url, 'confirmed');
+        // quick liveness check
+        await conn.getLatestBlockhash();
+        return conn;
+      } catch { /* try next */ }
+    }
+    throw new Error('All RPC endpoints failed. Please try again later.');
+  }
+
   async function checkNFTs(walletPubkey) {
+    const connection = await getConnection();
+
     const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
       walletPubkey,
       { programId: new PublicKey(TOKEN_PROG_ID) }
@@ -263,7 +282,7 @@
       let o = 1;              // key byte
       o += 32;                // update_authority
       o += 32;                // mint
-      o += 4 + u32LE(d, o);  // name (u32 len + bytes)
+      o += 4 + u32LE(d, o);  // name
       o += 4 + u32LE(d, o);  // symbol
       o += 4 + u32LE(d, o);  // uri
       o += 2;                 // seller_fee_basis_points
