@@ -32,6 +32,12 @@ button {
   cursor: pointer;
 }
 .hidden { display:none; }
+.addr {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 10px;
+  word-break: break-all;
+}
 </style>
 </head>
 
@@ -50,24 +56,24 @@ button {
 
 <div id="success" class="hidden">
   <h2>✅ Access Granted</h2>
-  <p id="addr1"></p>
+  <div id="addr1" class="addr"></div>
 </div>
 
 <div id="fail" class="hidden">
   <h2>❌ Not a Holder</h2>
-  <p id="addr2"></p>
+  <div id="addr2" class="addr"></div>
 </div>
 
 <div id="error" class="hidden">
   <h2>⚠️ Error</h2>
-  <p id="err"></p>
+  <div id="err"></div>
 </div>
 
 </div>
 
 <script>
 const COLLECTION_MINT = "7RHNii678utwGh56Q4NA6xt2cfq8RukHk42KTv8ky4gf";
-const HELIUS_API_KEY = "60105ec9-415b-4348-acef-4d3a07447582";
+const HELIUS_API_KEY = "60105ec9-415b-4348-acef-4d3a07447582"; // ← replace this
 
 function show(id) {
   ["connect","loading","success","fail","error"].forEach(x =>
@@ -80,7 +86,7 @@ async function connectWallet() {
   const provider = window.phantom?.solana ?? window.solana;
 
   if (!provider) {
-    document.getElementById("err").textContent = "Install Phantom wallet.";
+    document.getElementById("err").textContent = "Phantom wallet not found.";
     return show("error");
   }
 
@@ -100,7 +106,8 @@ async function connectWallet() {
     }
 
   } catch (err) {
-    document.getElementById("err").textContent = err.message;
+    document.getElementById("err").textContent =
+      err.message || "Something went wrong";
     show("error");
   }
 }
@@ -109,15 +116,21 @@ async function checkNFTs(pubkey) {
   const url = `https://api.helius.xyz/v0/addresses/${pubkey.toBase58()}/assets?api-key=${HELIUS_API_KEY}`;
 
   const res = await fetch(url);
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Helius error ${res.status}: ${text}`);
+  }
+
   const data = await res.json();
 
-  if (!data.items) return false;
+  console.log("Helius assets:", data);
 
-  console.log("ALL NFTs:", data.items);
+  if (!data.items || !data.items.length) return false;
 
   return data.items.some(nft => {
 
-    // ✅ Check grouping (standard way)
+    // ✅ Primary method (most reliable)
     if (nft.grouping) {
       const match = nft.grouping.some(g =>
         g.group_key === "collection" &&
@@ -126,7 +139,7 @@ async function checkNFTs(pubkey) {
       if (match) return true;
     }
 
-    // ✅ Fallback: some NFTs store it differently
+    // ✅ Fallback (older NFTs)
     if (nft.collection?.key === COLLECTION_MINT) {
       return true;
     }
