@@ -1,153 +1,253 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NFT Gate</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NFT Gate</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-<script src="https://unpkg.com/@solana/web3.js@1.95.4/lib/index.iife.min.js"></script>
+    :root {
+      --bg: #080b14;
+      --surface: #111827;
+      --border: #1e293b;
+      --accent: #9945ff;
+      --accent2: #14f195;
+      --text: #e2e8f0;
+      --muted: #64748b;
+    }
 
-<style>
-body {
-  font-family: sans-serif;
-  background: #0b0f1a;
-  color: white;
-  display: grid;
-  place-items: center;
-  height: 100vh;
-}
-.card {
-  background: #121826;
-  padding: 2rem;
-  border-radius: 16px;
-  text-align: center;
-  width: 360px;
-}
-button {
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: none;
-  background: #7c3aed;
-  color: white;
-  cursor: pointer;
-}
-.hidden { display:none; }
-.addr {
-  font-size: 12px;
-  opacity: 0.7;
-  margin-top: 10px;
-  word-break: break-all;
-}
-</style>
+    body {
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 1.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1.25rem;
+      padding: 3rem 2.5rem;
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+      box-shadow: 0 0 80px rgba(153,69,255,0.1);
+    }
+
+    .icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      font-size: 2rem;
+    }
+
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: .5rem; }
+    .subtitle { color: var(--muted); font-size: .9375rem; line-height: 1.6; margin-bottom: 2rem; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      padding: .8rem 1.75rem;
+      border-radius: .75rem;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      width: 100%;
+    }
+    .btn:hover { opacity: .88; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      margin-top: .75rem;
+      font-size: .875rem;
+    }
+
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+      margin: .5rem auto 1.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .badge {
+      display: inline-block;
+      border-radius: 2rem;
+      padding: .3rem .9rem;
+      font-size: .8125rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    .badge-ok  { background: rgba(20,241,149,.12); color: var(--accent2); border: 1px solid rgba(20,241,149,.3); }
+    .badge-no  { background: rgba(239,68,68,.12);  color: #f87171;        border: 1px solid rgba(239,68,68,.3);  }
+    .badge-err { background: rgba(251,191,36,.12); color: #fbbf24;        border: 1px solid rgba(251,191,36,.3); }
+
+    .address {
+      font-family: monospace;
+      font-size: .8rem;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: .5rem;
+      padding: .5rem .75rem;
+      margin: 1rem 0 1.5rem;
+      word-break: break-all;
+      text-align: left;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; animation: fadeIn .2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  </style>
 </head>
-
 <body>
-
 <div class="card">
 
-<div id="connect">
-  <h2>Connect Wallet</h2>
-  <button onclick="connectWallet()">Connect</button>
-</div>
+  <!-- Connect -->
+  <div id="s-connect" class="screen active">
+    <div class="icon">&#x1F510;</div>
+    <h1>Members Only</h1>
+    <p class="subtitle">Connect your Solana wallet to verify you hold an NFT from this collection.</p>
+    <button class="btn btn-primary" onclick="connectWallet()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2"/>
+        <path d="M16 7V5a2 2 0 0 0-4 0v2"/>
+      </svg>
+      Connect Wallet
+    </button>
+  </div>
 
-<div id="loading" class="hidden">
-  <p>Checking NFTs...</p>
-</div>
+  <!-- Checking -->
+  <div id="s-checking" class="screen">
+    <div class="spinner"></div>
+    <h1>Verifying&hellip;</h1>
+    <p class="subtitle">Scanning your wallet for collection NFTs.</p>
+  </div>
 
-<div id="success" class="hidden">
-  <h2>✅ Access Granted</h2>
-  <div id="addr1" class="addr"></div>
-</div>
+  <!-- Holder -->
+  <div id="s-holder" class="screen">
+    <div class="icon">&#x2705;</div>
+    <div class="badge badge-ok">&#x2713; Verified Holder</div>
+    <h1>Welcome!</h1>
+    <p class="subtitle">Your NFT has been verified. You&rsquo;re in.</p>
+    <div class="address" id="addr-holder"></div>
+    <button class="btn btn-ghost" onclick="resetGate()">Disconnect</button>
+  </div>
 
-<div id="fail" class="hidden">
-  <h2>❌ Not a Holder</h2>
-  <div id="addr2" class="addr"></div>
-</div>
+  <!-- Not a holder -->
+  <div id="s-denied" class="screen">
+    <div class="icon">&#x1F6AB;</div>
+    <div class="badge badge-no">&#x2717; Not a Holder</div>
+    <h1>Access Denied</h1>
+    <p class="subtitle">No NFT from this collection was found in your wallet.</p>
+    <div class="address" id="addr-denied"></div>
+    <button class="btn btn-ghost" onclick="resetGate()">Try Another Wallet</button>
+  </div>
 
-<div id="error" class="hidden">
-  <h2>⚠️ Error</h2>
-  <div id="err"></div>
-</div>
+  <!-- Error -->
+  <div id="s-error" class="screen">
+    <div class="icon">&#x26A0;&#xFE0F;</div>
+    <div class="badge badge-err">Error</div>
+    <h1>Something went wrong</h1>
+    <p class="subtitle" id="err-msg">Unable to verify. Please try again.</p>
+    <button class="btn btn-primary" onclick="resetGate()">Try Again</button>
+  </div>
 
 </div>
 
 <script>
-const COLLECTION_MINT = "7RHNii678utwGh56Q4NA6xt2cfq8RukHk42KTv8ky4gf";
-const HELIUS_API_KEY = "60105ec9-415b-4348-acef-4d3a07447582"; // ← replace this
+  // Restrict this key to https://ntz619.github.io in your Helius dashboard
+  // so it cannot be misused even though it is visible in source.
+  const HELIUS_URL      = 'https://mainnet.helius-rpc.com/?api-key=60105ec9-415b-4348-acef-4d3a07447582';
+  const COLLECTION_MINT = '7RHNii678utwGh56Q4NA6xt2cfq8RukHk42KTv8ky4gf';
 
-function show(id) {
-  ["connect","loading","success","fail","error"].forEach(x =>
-    document.getElementById(x).classList.add("hidden")
-  );
-  document.getElementById(id).classList.remove("hidden");
-}
-
-async function connectWallet() {
-  const provider = window.phantom?.solana ?? window.solana;
-
-  if (!provider) {
-    document.getElementById("err").textContent = "Phantom wallet not found.";
-    return show("error");
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
   }
+  function resetGate() { show('s-connect'); }
 
-  try {
-    const { publicKey } = await provider.connect();
-
-    show("loading");
-
-    const isHolder = await checkNFTs(publicKey);
-
-    if (isHolder) {
-      document.getElementById("addr1").textContent = publicKey.toBase58();
-      show("success");
-    } else {
-      document.getElementById("addr2").textContent = publicKey.toBase58();
-      show("fail");
+  async function connectWallet() {
+    const provider = window.phantom?.solana ?? window.solana;
+    if (!provider) {
+      document.getElementById('err-msg').textContent =
+        'Phantom wallet not found. Install it from phantom.app';
+      show('s-error');
+      return;
     }
-
-  } catch (err) {
-    document.getElementById("err").textContent =
-      err.message || "Something went wrong";
-    show("error");
+    try {
+      const { publicKey } = await provider.connect();
+      show('s-checking');
+      const address = publicKey.toString();
+      const found   = await holdsCollectionNFT(address);
+      if (found) {
+        document.getElementById('addr-holder').textContent = address;
+        show('s-holder');
+      } else {
+        document.getElementById('addr-denied').textContent = address;
+        show('s-denied');
+      }
+    } catch (err) {
+      if (err.code === 4001) { resetGate(); return; } // user rejected
+      document.getElementById('err-msg').textContent = err.message || 'Connection failed.';
+      show('s-error');
+    }
   }
-}
 
-async function checkNFTs(pubkey) {
-  const url = `https://api.helius.xyz/v0/addresses/${pubkey.toBase58()}/assets?api-key=${HELIUS_API_KEY}`;
-
-  const res = await fetch(url);
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Helius error ${res.status}: ${text}`);
+  async function rpc(method, params) {
+    const res = await fetch(HELIUS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: '1', method, params }),
+    });
+    if (!res.ok) throw new Error(`RPC ${res.status}: ${res.statusText}`);
+    const json = await res.json();
+    if (json.error) throw new Error(json.error.message ?? 'RPC error');
+    return json.result;
   }
 
-  const data = await res.json();
+  async function holdsCollectionNFT(ownerAddress) {
+    let page = 1;
+    while (true) {
+      const result = await rpc('getAssetsByOwner', {
+        ownerAddress,
+        page,
+        limit: 1000,
+        displayOptions: { showCollectionMetadata: false },
+      });
 
-  console.log("Helius assets:", data);
-
-  if (!data.items || !data.items.length) return false;
-
-  return data.items.some(nft => {
-
-    // ✅ Primary method (most reliable)
-    if (nft.grouping) {
-      const match = nft.grouping.some(g =>
-        g.group_key === "collection" &&
-        g.group_value === COLLECTION_MINT
+      const items = result?.items ?? [];
+      const found = items.some(asset =>
+        Array.isArray(asset.grouping) &&
+        asset.grouping.some(g =>
+          g.group_key === 'collection' && g.group_value === COLLECTION_MINT
+        )
       );
-      if (match) return true;
-    }
+      if (found) return true;
 
-    // ✅ Fallback (older NFTs)
-    if (nft.collection?.key === COLLECTION_MINT) {
-      return true;
+      // Stop if we've seen all assets
+      if (items.length < 1000) return false;
+      page++;
     }
-
-    return false;
-  });
-}
+  }
 </script>
-
 </body>
 </html>
