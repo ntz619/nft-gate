@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NFT Gate</title>
-  <!-- Portals SDK — wallet access + Unity messaging -->
   <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,13 +40,10 @@
     }
 
     .icon {
-      width: 72px;
-      height: 72px;
+      width: 72px; height: 72px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       margin: 0 auto 1.5rem;
       font-size: 2rem;
     }
@@ -56,64 +52,56 @@
     .subtitle { color: var(--muted); font-size: .9375rem; line-height: 1.6; margin-bottom: 2rem; }
 
     .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: .5rem;
-      padding: .8rem 1.75rem;
-      border-radius: .75rem;
-      border: none;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity .15s, transform .1s;
-      width: 100%;
+      display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+      padding: .8rem 1.75rem; border-radius: .75rem; border: none;
+      font-size: 1rem; font-weight: 600; cursor: pointer;
+      transition: opacity .15s, transform .1s; width: 100%;
     }
     .btn:hover { opacity: .88; transform: translateY(-1px); }
     .btn:active { transform: translateY(0); }
     .btn-primary { background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; }
-    .btn-ghost {
-      background: transparent;
-      color: var(--muted);
-      border: 1px solid var(--border);
-      margin-top: .75rem;
-      font-size: .875rem;
-    }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); margin-top: .75rem; font-size: .875rem; }
 
     .spinner {
       width: 44px; height: 44px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
+      border: 3px solid var(--border); border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin .75s linear infinite;
-      margin: .5rem auto 1.5rem;
+      margin: .5rem auto 1rem;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .badge {
-      display: inline-block;
-      border-radius: 2rem;
-      padding: .3rem .9rem;
-      font-size: .8125rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
+      display: inline-block; border-radius: 2rem;
+      padding: .3rem .9rem; font-size: .8125rem; font-weight: 600; margin-bottom: 1rem;
     }
     .badge-ok  { background: rgba(20,241,149,.12); color: var(--accent2); border: 1px solid rgba(20,241,149,.3); }
     .badge-no  { background: rgba(239,68,68,.12);  color: #f87171;        border: 1px solid rgba(239,68,68,.3);  }
     .badge-err { background: rgba(251,191,36,.12); color: #fbbf24;        border: 1px solid rgba(251,191,36,.3); }
 
     .address {
+      font-family: monospace; font-size: .8rem; color: var(--muted);
+      background: var(--bg); border: 1px solid var(--border); border-radius: .5rem;
+      padding: .5rem .75rem; margin: 1rem 0 1.5rem; word-break: break-all; text-align: left;
+    }
+
+    /* Debug log shown during verification */
+    #debug-log {
+      margin-top: 1rem;
+      text-align: left;
       font-family: monospace;
-      font-size: .8rem;
+      font-size: .75rem;
       color: var(--muted);
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: .5rem;
-      padding: .5rem .75rem;
-      margin: 1rem 0 1.5rem;
-      word-break: break-all;
-      text-align: left;
+      padding: .6rem .75rem;
+      max-height: 140px;
+      overflow-y: auto;
     }
+    #debug-log p { margin-bottom: .2rem; }
+    #debug-log p.ok  { color: var(--accent2); }
+    #debug-log p.err { color: #f87171; }
 
     .screen { display: none; }
     .screen.active { display: block; animation: fadeIn .2s ease; }
@@ -123,28 +111,24 @@
 <body>
 <div class="card">
 
-  <!-- Connect -->
   <div id="s-connect" class="screen active">
     <div class="icon">&#x1F510;</div>
     <h1>Members Only</h1>
     <p class="subtitle">Click below to verify your wallet holds an NFT from this collection.</p>
     <button class="btn btn-primary" onclick="verify()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="7" width="20" height="14" rx="2"/>
-        <path d="M16 7V5a2 2 0 0 0-4 0v2"/>
+        <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2"/>
       </svg>
       Verify Wallet
     </button>
   </div>
 
-  <!-- Checking -->
   <div id="s-checking" class="screen">
     <div class="spinner"></div>
     <h1>Verifying&hellip;</h1>
-    <p class="subtitle">Scanning your wallet for collection NFTs.</p>
+    <div id="debug-log"></div>
   </div>
 
-  <!-- Holder -->
   <div id="s-holder" class="screen">
     <div class="icon">&#x2705;</div>
     <div class="badge badge-ok">&#x2713; Verified Holder</div>
@@ -154,7 +138,6 @@
     <button class="btn btn-ghost" onclick="resetGate()">Check Another</button>
   </div>
 
-  <!-- Not a holder -->
   <div id="s-denied" class="screen">
     <div class="icon">&#x1F6AB;</div>
     <div class="badge badge-no">&#x2717; Not a Holder</div>
@@ -164,7 +147,6 @@
     <button class="btn btn-ghost" onclick="resetGate()">Try Again</button>
   </div>
 
-  <!-- Error -->
   <div id="s-error" class="screen">
     <div class="icon">&#x26A0;&#xFE0F;</div>
     <div class="badge badge-err">Error</div>
@@ -176,7 +158,6 @@
 </div>
 
 <script>
-  // Restrict this key to https://ntz619.github.io in your Helius dashboard.
   const HELIUS_URL      = 'https://mainnet.helius-rpc.com/?api-key=60105ec9-415b-4348-acef-4d3a07447582';
   const COLLECTION_MINT = '7RHNii678utwGh56Q4NA6xt2cfq8RukHk42KTv8ky4gf';
 
@@ -186,6 +167,24 @@
   }
   function resetGate() { show('s-connect'); }
 
+  function log(msg, type) {
+    const el = document.getElementById('debug-log');
+    if (!el) return;
+    const p = document.createElement('p');
+    if (type) p.className = type;
+    p.textContent = '› ' + msg;
+    el.appendChild(p);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  // Log every raw postMessage the iframe receives — helps confirm the response arrives
+  window.addEventListener('message', function(e) {
+    const preview = typeof e.data === 'string'
+      ? e.data.slice(0, 80)
+      : JSON.stringify(e.data).slice(0, 80);
+    log('[msg from ' + e.origin + '] ' + preview);
+  });
+
   function sendMessage(taskName, targetState) {
     const message = { TaskName: taskName, TaskTargetState: targetState };
     PortalsSdk.sendMessageToUnity(JSON.stringify(message));
@@ -193,19 +192,24 @@
 
   function verify() {
     show('s-checking');
+    document.getElementById('debug-log').innerHTML = '';
+    log('Requesting public key from Portals (target: ' + PortalsSdk.Origin.Prod + ')');
 
-    // requestPublicKey sends a postMessage to the PARENT window (Portals).
-    // The second arg is the targetOrigin — must match where Portals is hosted,
-    // not the iframe's own origin. PortalsSdk.Origin.Prod = "https://theportal.to"
     PortalsSdk.requestPublicKey(PortalsSdk.Origin.Prod, async function(publicKey) {
+      log('Callback fired. publicKey = "' + publicKey + '"', publicKey ? 'ok' : 'err');
+
       if (!publicKey) {
         document.getElementById('err-msg').textContent =
           'No wallet connected in Portals. Please connect a wallet and try again.';
         show('s-error');
         return;
       }
+
       try {
+        log('Calling Helius getAssetsByOwner...');
         const found = await holdsCollectionNFT(publicKey);
+        log('Helius result: found=' + found, found ? 'ok' : null);
+
         if (found) {
           document.getElementById('addr-holder').textContent = publicKey;
           show('s-holder');
@@ -215,6 +219,7 @@
           show('s-denied');
         }
       } catch (err) {
+        log('Error: ' + err.message, 'err');
         document.getElementById('err-msg').textContent = err.message || 'Verification failed.';
         show('s-error');
       }
@@ -242,7 +247,6 @@
         limit: 1000,
         displayOptions: { showCollectionMetadata: false },
       });
-
       const items = result?.items ?? [];
       const found = items.some(asset =>
         Array.isArray(asset.grouping) &&
@@ -251,7 +255,6 @@
         )
       );
       if (found) return true;
-
       if (items.length < 1000) return false;
       page++;
     }
