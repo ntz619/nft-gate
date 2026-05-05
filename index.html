@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NFT Gate</title>
-  <!-- Portals SDK — enables sendMessageToUnity from inside the iframe -->
+  <!-- Portals SDK — wallet access + Unity messaging -->
   <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -127,13 +127,13 @@
   <div id="s-connect" class="screen active">
     <div class="icon">&#x1F510;</div>
     <h1>Members Only</h1>
-    <p class="subtitle">Connect your Solana wallet to verify you hold an NFT from this collection.</p>
-    <button class="btn btn-primary" onclick="connectWallet()">
+    <p class="subtitle">Click below to verify your wallet holds an NFT from this collection.</p>
+    <button class="btn btn-primary" onclick="verify()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="2" y="7" width="20" height="14" rx="2"/>
         <path d="M16 7V5a2 2 0 0 0-4 0v2"/>
       </svg>
-      Connect Wallet
+      Verify Wallet
     </button>
   </div>
 
@@ -151,7 +151,7 @@
     <h1>Welcome!</h1>
     <p class="subtitle">Your NFT has been verified. You&rsquo;re in.</p>
     <div class="address" id="addr-holder"></div>
-    <button class="btn btn-ghost" onclick="resetGate()">Disconnect</button>
+    <button class="btn btn-ghost" onclick="resetGate()">Check Another</button>
   </div>
 
   <!-- Not a holder -->
@@ -161,7 +161,7 @@
     <h1>Access Denied</h1>
     <p class="subtitle">No NFT from this collection was found in your wallet.</p>
     <div class="address" id="addr-denied"></div>
-    <button class="btn btn-ghost" onclick="resetGate()">Try Another Wallet</button>
+    <button class="btn btn-ghost" onclick="resetGate()">Try Again</button>
   </div>
 
   <!-- Error -->
@@ -186,38 +186,37 @@
   }
   function resetGate() { show('s-connect'); }
 
-  // Notifies the Portals Unity scene that a task has reached a target state.
   function sendMessage(taskName, targetState) {
     const message = { TaskName: taskName, TaskTargetState: targetState };
     PortalsSdk.sendMessageToUnity(JSON.stringify(message));
   }
 
-  async function connectWallet() {
-    const provider = window.phantom?.solana ?? window.solana;
-    if (!provider) {
-      document.getElementById('err-msg').textContent =
-        'Phantom wallet not found. Install it from phantom.app';
-      show('s-error');
-      return;
-    }
-    try {
-      const { publicKey } = await provider.connect();
-      show('s-checking');
-      const address = publicKey.toString();
-      const found   = await holdsCollectionNFT(address);
-      if (found) {
-        document.getElementById('addr-holder').textContent = address;
-        show('s-holder');
-        sendMessage('Holder', 'SetAnyToCompleted');
-      } else {
-        document.getElementById('addr-denied').textContent = address;
-        show('s-denied');
+  function verify() {
+    show('s-checking');
+    // Ask Portals for the wallet address of the currently logged-in user.
+    // This works inside the Portals iframe without requiring Phantom injection.
+    PortalsSdk.requestPublicKey(window.location.origin, async function(publicKey) {
+      if (!publicKey) {
+        document.getElementById('err-msg').textContent =
+          'No wallet connected in Portals. Please connect a wallet and try again.';
+        show('s-error');
+        return;
       }
-    } catch (err) {
-      if (err.code === 4001) { resetGate(); return; } // user rejected
-      document.getElementById('err-msg').textContent = err.message || 'Connection failed.';
-      show('s-error');
-    }
+      try {
+        const found = await holdsCollectionNFT(publicKey);
+        if (found) {
+          document.getElementById('addr-holder').textContent = publicKey;
+          show('s-holder');
+          sendMessage('Holder', 'SetAnyToCompleted');
+        } else {
+          document.getElementById('addr-denied').textContent = publicKey;
+          show('s-denied');
+        }
+      } catch (err) {
+        document.getElementById('err-msg').textContent = err.message || 'Verification failed.';
+        show('s-error');
+      }
+    });
   }
 
   async function rpc(method, params) {
