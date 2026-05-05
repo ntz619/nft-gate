@@ -193,9 +193,11 @@
 
   function verify() {
     show('s-checking');
-    // Ask Portals for the wallet address of the currently logged-in user.
-    // This works inside the Portals iframe without requiring Phantom injection.
-    PortalsSdk.requestPublicKey(window.location.origin, async function(publicKey) {
+
+    // requestPublicKey sends a postMessage to the PARENT window (Portals).
+    // The second arg is the targetOrigin — must match where Portals is hosted,
+    // not the iframe's own origin. PortalsSdk.Origin.Prod = "https://theportal.to"
+    PortalsSdk.requestPublicKey(PortalsSdk.Origin.Prod, async function(publicKey) {
       if (!publicKey) {
         document.getElementById('err-msg').textContent =
           'No wallet connected in Portals. Please connect a wallet and try again.';
