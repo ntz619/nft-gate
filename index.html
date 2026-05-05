@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NFT Gate</title>
+  <!-- Portals SDK — enables sendMessageToUnity from inside the iframe -->
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -174,8 +176,7 @@
 </div>
 
 <script>
-  // Restrict this key to https://ntz619.github.io in your Helius dashboard
-  // so it cannot be misused even though it is visible in source.
+  // Restrict this key to https://ntz619.github.io in your Helius dashboard.
   const HELIUS_URL      = 'https://mainnet.helius-rpc.com/?api-key=60105ec9-415b-4348-acef-4d3a07447582';
   const COLLECTION_MINT = '7RHNii678utwGh56Q4NA6xt2cfq8RukHk42KTv8ky4gf';
 
@@ -184,6 +185,12 @@
     document.getElementById(id).classList.add('active');
   }
   function resetGate() { show('s-connect'); }
+
+  // Notifies the Portals Unity scene that a task has reached a target state.
+  function sendMessage(taskName, targetState) {
+    const message = { TaskName: taskName, TaskTargetState: targetState };
+    PortalsSdk.sendMessageToUnity(JSON.stringify(message));
+  }
 
   async function connectWallet() {
     const provider = window.phantom?.solana ?? window.solana;
@@ -201,6 +208,7 @@
       if (found) {
         document.getElementById('addr-holder').textContent = address;
         show('s-holder');
+        sendMessage('Holder', 'SetAnyToCompleted');
       } else {
         document.getElementById('addr-denied').textContent = address;
         show('s-denied');
@@ -243,7 +251,6 @@
       );
       if (found) return true;
 
-      // Stop if we've seen all assets
       if (items.length < 1000) return false;
       page++;
     }
